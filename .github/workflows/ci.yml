@@ -3,11 +3,50 @@ on: [pull_request, push]
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: platform
+          POSTGRES_PASSWORD: platform
+          POSTGRES_DB: platform
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U platform -d platform"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://platform:platform@localhost:5432/platform
+      JWT_SECRET: test-secret
+      KAFKA_BROKERS: localhost:9092
+      RABBITMQ_URL: amqp://platform:platform@localhost:5672
+      REDIS_URL: redis://localhost:6379
+      ELASTICSEARCH_NODE: http://localhost:9200
+      JWT_ISSUER: platform-production
+      JWT_AUDIENCE: platform-api
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - run: node scripts/check-env.js
       - run: npm run build
       - run: npm test -- --runInBand
+      - name: Start gateway for smoke test
+        run: |
+          node dist/apps/api-gateway/main.js > /tmp/api-gateway.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://localhost:3000/api/health >/dev/null && break
+            sleep 2
+          done
+      - run: npm run smoke:test
       - run: kubectl kustomize k8s > /dev/null

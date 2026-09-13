@@ -26,15 +26,23 @@ spec:
               readOnlyRootFilesystem: true,
               capabilities: { drop: ["ALL"] },
             }
-          readinessProbe:
+          startupProbe:
             {
               httpGet: { path: /api/health, port: 3000 },
+              failureThreshold: 30,
+              periodSeconds: 5,
+            }
+          readinessProbe:
+            {
+              httpGet: { path: /api/health/ready, port: 3000 },
               initialDelaySeconds: 5,
+              periodSeconds: 5,
             }
           livenessProbe:
             {
               httpGet: { path: /api/health, port: 3000 },
               initialDelaySeconds: 15,
+              periodSeconds: 10,
             }
 ---
 apiVersion: v1

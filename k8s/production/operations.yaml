@@ -18,4 +18,213 @@ spec:
   tls: [{ hosts: [api.example.com], secretName: platform-tls }]
   rules:
     - host: api.example.com
-      http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: api-gateway, port: { number: 80 } } } }] }
+      http:
+        {
+          paths:
+            [
+              {
+                path: /,
+                pathType: Prefix,
+                backend:
+                  { service: { name: api-gateway, port: { number: 80 } } },
+              },
+            ],
+        }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: users-outbox-relay
+  namespace: platform
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: users-outbox-relay
+              image: platform/users:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run outbox:relay"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: users-idempotency-cleanup
+  namespace: platform
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: users-idempotency-cleanup
+              image: platform/users:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run idempotency:cleanup"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orders-outbox-relay
+  namespace: platform
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: orders-outbox-relay
+              image: platform/orders:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run outbox:relay"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orders-idempotency-cleanup
+  namespace: platform
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: orders-idempotency-cleanup
+              image: platform/orders:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run idempotency:cleanup"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: notifications-outbox-relay
+  namespace: platform
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: notifications-outbox-relay
+              image: platform/notifications:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run outbox:relay"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: notifications-idempotency-cleanup
+  namespace: platform
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+          containers:
+            - name: notifications-idempotency-cleanup
+              image: platform/notifications:latest
+              imagePullPolicy: IfNotPresent
+              command: ["sh", "-c", "npm run idempotency:cleanup"]
+              envFrom:
+                - configMapRef: { name: platform-config }
+                - secretRef: { name: platform-secrets }
+              securityContext:
+                {
+                  allowPrivilegeEscalation: false,
+                  readOnlyRootFilesystem: true,
+                  capabilities: { drop: ["ALL"] },
+                }

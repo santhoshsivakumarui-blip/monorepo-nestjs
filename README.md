@@ -4,12 +4,12 @@ NestJS services, backed locally by Docker Compose and deployable with Kubernetes
 
 ## Services
 
-| App | Responsibility | Transport |
-|---|---|---|
-| `api-gateway` | Public REST entry point | HTTP :3000 |
-| `users` | User-domain events | Kafka |
-| `orders` | Order-domain events | Kafka |
-| `notifications` | Asynchronous notifications | RabbitMQ |
+| App             | Responsibility             | Transport  |
+| --------------- | -------------------------- | ---------- |
+| `api-gateway`   | Public REST entry point    | HTTP :3000 |
+| `users`         | User-domain events         | Kafka      |
+| `orders`        | Order-domain events        | Kafka      |
+| `notifications` | Asynchronous notifications | RabbitMQ   |
 
 `Postgres`, `Redis`, `Kafka`, `RabbitMQ`, and `Elasticsearch` are included as development infrastructure. Shared event contracts live in `libs/contracts`; common logging and request middleware live in `libs/common`.
 
@@ -28,12 +28,20 @@ NestJS services, backed locally by Docker Compose and deployable with Kubernetes
 
 ```sh
 cp .env.example .env
+# Replace placeholder secrets before running the stack
+
 docker compose up --build
 ```
 
 On first use, Compose initializes separate `users_db`, `orders_db`, and `notifications_db` databases. If you previously started an older database volume and need this local schema, remove only the project volumes with `docker compose down -v`, then start again; this permanently removes local development data.
 
 The gateway health endpoint is `http://localhost:3000/api/health`. RabbitMQ management is at `http://localhost:15672` (`platform` / `platform`).
+
+Run the system smoke test with:
+
+```sh
+npm run smoke:test
+```
 
 Run the gateway load baseline with `k6 run load/k6-gateway.js` after the stack is healthy.
 
@@ -42,6 +50,8 @@ Run the gateway load baseline with `k6 run load/k6-gateway.js` after the stack i
 The gateway enforces shared Redis limits: authentication routes are limited to 5 requests/minute per API key, bearer token, or client IP; other public API routes are limited to 100/minute. Kong applies the matching Redis-backed edge limit when the optional platform profile is enabled. Run `k6 run load/k6-rate-limit.js` to exercise the authentication limit.
 
 Every mutating domain endpoint requires an `Idempotency-Key` header of 16–255 characters. The same key and request body replay the original response; reusing a key with a different payload returns `409`. Keys are stored atomically with the domain write and outbox event. Run `npm run idempotency:cleanup` daily for each service database to retain completed keys for 24 hours.
+
+The project also validates required environment values at startup; placeholder secrets such as `change-me`, `development-only`, or `placeholder` are rejected by [scripts/check-env.js](scripts/check-env.js).
 
 ## Developer workflow
 

@@ -7,17 +7,30 @@ const required = [
   "ELASTICSEARCH_NODE",
 ];
 const placeholders = /change-me|development-only|example|placeholder/i;
-const missing = required.filter((key) => !process.env[key]);
-const invalid = required.filter(
-  (key) =>
-    typeof process.env[key] === "string" && placeholders.test(process.env[key]),
-);
 
-if (missing.length || invalid.length) {
-  const issues = [...missing, ...invalid];
-  console.error(
-    `Invalid or missing environment values: ${[...new Set(issues)].join(", ")}`,
+function validateRequiredEnvironment(env = process.env) {
+  const missing = required.filter((key) => !env[key]);
+  const invalid = required.filter(
+    (key) => typeof env[key] === "string" && placeholders.test(env[key]),
   );
-  process.exit(1);
+
+  const issues = [...new Set([...missing, ...invalid])];
+
+  return {
+    ok: issues.length === 0,
+    issues,
+  };
 }
-console.log("Environment: OK");
+
+if (require.main === module) {
+  const result = validateRequiredEnvironment();
+  if (!result.ok) {
+    console.error(
+      `Invalid or missing environment values: ${result.issues.join(", ")}`,
+    );
+    process.exit(1);
+  }
+  console.log("Environment: OK");
+}
+
+module.exports = { required, validateRequiredEnvironment };
