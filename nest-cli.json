@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "monorepo": true,
+  "root": "apps/api-gateway",
+  "sourceRoot": "apps/api-gateway/src",
+  "compilerOptions": { "webpack": true, "tsConfigPath": "apps/api-gateway/tsconfig.app.json" },
+  "projects": {
+    "api-gateway": { "type": "application", "root": "apps/api-gateway", "entryFile": "main", "sourceRoot": "apps/api-gateway/src", "compilerOptions": { "tsConfigPath": "apps/api-gateway/tsconfig.app.json" } },
+    "users": { "type": "application", "root": "apps/users", "entryFile": "main", "sourceRoot": "apps/users/src", "compilerOptions": { "tsConfigPath": "apps/users/tsconfig.app.json" } },
+    "orders": { "type": "application", "root": "apps/orders", "entryFile": "main", "sourceRoot": "apps/orders/src", "compilerOptions": { "tsConfigPath": "apps/orders/tsconfig.app.json" } },
+    "notifications": { "type": "application", "root": "apps/notifications", "entryFile": "main", "sourceRoot": "apps/notifications/src", "compilerOptions": { "tsConfigPath": "apps/notifications/tsconfig.app.json" } }
+  }
+}

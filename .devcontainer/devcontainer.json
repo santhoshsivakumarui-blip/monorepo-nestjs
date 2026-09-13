@@ -1,0 +1,7 @@
+{
+  "name": "platform-monorepo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": { "ghcr.io/devcontainers/features/docker-in-docker:2": {} },
+  "postCreateCommand": "npm ci",
+  "customizations": { "vscode": { "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"] } }
+}

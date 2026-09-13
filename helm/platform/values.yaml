@@ -1,0 +1,13 @@
+image:
+  repository: platform/api-gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 2
+service: { port: 80 }
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits: { cpu: "1", memory: 512Mi }
+autoscaling: { enabled: true, minReplicas: 2, maxReplicas: 10, targetCPUUtilizationPercentage: 70 }
+secrets:
+  postgresPassword: change-me
+  jwtSecret: change-me

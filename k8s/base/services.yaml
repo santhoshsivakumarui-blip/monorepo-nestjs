@@ -1,0 +1,147 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: api-gateway, namespace: platform }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: api-gateway } }
+  template:
+    metadata: { labels: { app: api-gateway } }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: api-gateway
+          image: platform/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 3000 }]
+          envFrom:
+            [
+              { configMapRef: { name: platform-config } },
+              { secretRef: { name: platform-secrets } },
+            ]
+          securityContext:
+            {
+              allowPrivilegeEscalation: false,
+              readOnlyRootFilesystem: true,
+              capabilities: { drop: ["ALL"] },
+            }
+          readinessProbe:
+            {
+              httpGet: { path: /api/health, port: 3000 },
+              initialDelaySeconds: 5,
+            }
+          livenessProbe:
+            {
+              httpGet: { path: /api/health, port: 3000 },
+              initialDelaySeconds: 15,
+            }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: api-gateway, namespace: platform }
+spec:
+  { selector: { app: api-gateway }, ports: [{ port: 80, targetPort: 3000 }] }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: users, namespace: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: users } }
+  template:
+    metadata: { labels: { app: users } }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: users
+          image: platform/users:latest
+          ports: [{ containerPort: 3001 }]
+          envFrom:
+            [
+              { configMapRef: { name: platform-config } },
+              { secretRef: { name: platform-secrets } },
+            ]
+          securityContext:
+            {
+              allowPrivilegeEscalation: false,
+              readOnlyRootFilesystem: true,
+              capabilities: { drop: ["ALL"] },
+            }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: users, namespace: platform }
+spec: { selector: { app: users }, ports: [{ port: 3001, targetPort: 3001 }] }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: orders, namespace: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: orders } }
+  template:
+    metadata: { labels: { app: orders } }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: orders
+          image: platform/orders:latest
+          ports: [{ containerPort: 3002 }]
+          envFrom:
+            [
+              { configMapRef: { name: platform-config } },
+              { secretRef: { name: platform-secrets } },
+            ]
+          securityContext:
+            {
+              allowPrivilegeEscalation: false,
+              readOnlyRootFilesystem: true,
+              capabilities: { drop: ["ALL"] },
+            }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: orders, namespace: platform }
+spec: { selector: { app: orders }, ports: [{ port: 3002, targetPort: 3002 }] }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: notifications, namespace: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: notifications } }
+  template:
+    metadata: { labels: { app: notifications } }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: notifications
+          image: platform/notifications:latest
+          ports: [{ containerPort: 3003 }]
+          envFrom:
+            [
+              { configMapRef: { name: platform-config } },
+              { secretRef: { name: platform-secrets } },
+            ]
+          securityContext:
+            {
+              allowPrivilegeEscalation: false,
+              readOnlyRootFilesystem: true,
+              capabilities: { drop: ["ALL"] },
+            }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: notifications, namespace: platform }
+spec:
+  {
+    selector: { app: notifications },
+    ports: [{ port: 3003, targetPort: 3003 }],
+  }

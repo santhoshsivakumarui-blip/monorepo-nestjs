@@ -1,0 +1,13 @@
+const fs = require('fs');
+const path = require('path');
+const name = process.argv[2]?.toLowerCase();
+if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) throw new Error('Usage: npm run generate:service -- <kebab-name>');
+const root = path.join(process.cwd(), 'apps', name);
+if (fs.existsSync(root)) throw new Error(`${name} already exists`);
+for (const dir of ['src', 'prisma', 'test']) fs.mkdirSync(path.join(root, dir), { recursive: true });
+const className = name.split('-').map((x) => x[0].toUpperCase() + x.slice(1)).join('');
+fs.writeFileSync(path.join(root, 'src', 'app.module.ts'), `import { Module } from '@nestjs/common';\n@Module({}) export class AppModule {}\n`);
+fs.writeFileSync(path.join(root, 'src', 'main.ts'), `import { NestFactory } from '@nestjs/core';\nimport { AppModule } from './app.module';\nasync function bootstrap() { const app = await NestFactory.create(AppModule); await app.listen(process.env.PORT ?? 3000, '0.0.0.0'); }\nbootstrap();\n`);
+fs.writeFileSync(path.join(root, 'tsconfig.app.json'), JSON.stringify({ extends: '../../tsconfig.json', compilerOptions: { outDir: `../../dist/apps/${name}` }, include: ['src/**/*.ts'] }, null, 2));
+fs.writeFileSync(path.join(root, 'README.md'), `# ${className} service\n\nOwns its database, REST routes, and versioned event contracts. Add it to nest-cli, Docker Compose, base Kubernetes manifests, and Helm values.\n`);
+console.log(`Created ${root}. Complete the registration steps documented in apps/${name}/README.md.`);

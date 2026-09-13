@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: api-gateway, namespace: platform }
+spec:
+  template:
+    spec:
+      containers:
+        - name: api-gateway
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: "1", memory: 512Mi }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ["ALL"] } }
