@@ -47,18 +47,49 @@ async function assertTcpReachable(host, port, label) {
   });
 }
 
+function parseEndpointHostPort(rawValue, defaultPort) {
+  if (!rawValue) {
+    throw new Error("Endpoint value is required");
+  }
+
+  if (/^https?:\/\//i.test(rawValue)) {
+    const url = new URL(rawValue);
+    return { host: url.hostname, port: Number(url.port || defaultPort) };
+  }
+
+  if (rawValue.includes(":")) {
+    const [host, portText] = rawValue.split(":");
+    return { host, port: Number(portText || defaultPort) };
+  }
+
+  return { host: rawValue, port: defaultPort };
+}
+
 async function assertKafkaReachable() {
   if (!process.env.KAFKA_BROKERS) {
     throw new Error("KAFKA_BROKERS is not configured");
   }
 
-  const [first] = process.env.KAFKA_BROKERS.split(",");
-  const [host, portText] = first.split(":");
-  const port = Number(portText ?? 9092);
+  const brokers = process.env.KAFKA_BROKERS.split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  await assertTcpReachable(host, port, "Kafka");
+  if (brokers.length === 0) {
+    throw new Error("KAFKA_BROKERS is empty");
+  }
 
-  const kafka = new Kafka({ brokers: [`${host}:${port}`] });
+  for (const broker of brokers) {
+    const { host, port } = parseEndpointHostPort(broker, 9092);
+    await assertTcpReachable(host, port, `Kafka (${broker})`);
+  }
+
+  const kafka = new Kafka({
+    brokers: brokers.map((broker) => {
+      const { host, port } = parseEndpointHostPort(broker, 9092);
+      return `${host}:${port}`;
+    }),
+  });
+
   const admin = kafka.admin();
   await admin.connect();
   await admin.listTopics();
@@ -70,10 +101,7 @@ async function assertRabbitMqReachable() {
     throw new Error("RABBITMQ_URL is not configured");
   }
 
-  const url = new URL(process.env.RABBITMQ_URL);
-  const host = url.hostname;
-  const port = Number(url.port || 5672);
-
+  const { host, port } = parseEndpointHostPort(process.env.RABBITMQ_URL, 5672);
   await assertTcpReachable(host, port, "RabbitMQ");
 }
 

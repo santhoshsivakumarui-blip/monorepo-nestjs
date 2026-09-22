@@ -1,12 +1,15 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { json, urlencoded } from "express";
+import { NextFunction, Request, Response } from "express";
 import { AppModule } from "./app.module";
 import { JsonLogger } from "../../../libs/common/src/json.logger";
 import { requestId } from "../../../libs/common/src/request-id.middleware";
 import { ProblemDetailsFilter } from "../../../libs/common/src/api";
 import { rateLimit } from "../../../libs/common/src/rate-limit.middleware";
 import { buildCorsOrigins, buildSecurityHeaders } from "./security";
+import { mountServiceProxies } from "./proxy";
 import { registerGracefulShutdown } from "./shutdown";
 import { validateOidcConfiguration } from "./auth";
 
@@ -19,15 +22,22 @@ async function bootstrap() {
     await validateOidcConfiguration();
   }
 
-  const app = await NestFactory.create(AppModule, { logger: new JsonLogger() });
+  const app = await NestFactory.create(AppModule, {
+    logger: new JsonLogger(),
+    // Body parsing is disabled here and re-added below *after* the service
+    // proxies are mounted, so proxied request bodies (including multipart
+    // uploads) stream through to the microservices untouched.
+    bodyParser: false,
+  });
   const securityHeaders = buildSecurityHeaders();
   const origins = buildCorsOrigins(process.env.CORS_ORIGINS);
+  const expressApp = app.getHttpAdapter().getInstance();
 
   app.setGlobalPrefix("api");
-  app.getHttpAdapter().getInstance().set("trust proxy", 1);
+  expressApp.set("trust proxy", 1);
   app.use(requestId);
   app.use(rateLimit);
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     Object.entries(securityHeaders).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
@@ -46,6 +56,13 @@ async function bootstrap() {
       ],
     });
   }
+
+  // Mount the per-service reverse proxies before any body parser so they
+  // receive the raw request stream.
+  mountServiceProxies(expressApp);
+  expressApp.use(json());
+  expressApp.use(urlencoded({ extended: true }));
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new ProblemDetailsFilter());
   const spec = new DocumentBuilder()

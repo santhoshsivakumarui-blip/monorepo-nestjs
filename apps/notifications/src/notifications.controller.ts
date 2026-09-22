@@ -8,6 +8,7 @@ import {
   completeIdempotent,
   requestFingerprint,
 } from "../../../libs/common/src/idempotency";
+import { Topics } from "../../../libs/contracts/src/events";
 
 export class CreateNotificationDto {
   @IsString()
@@ -32,7 +33,7 @@ export class NotificationsController {
   ) {
     const event = {
       id: randomUUID(),
-      type: "notifications.requested.v1",
+      type: Topics.notificationsRequested,
       occurredAt: new Date().toISOString(),
       correlationId: randomUUID(),
       payload: body,

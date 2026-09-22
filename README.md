@@ -53,6 +53,19 @@ Every mutating domain endpoint requires an `Idempotency-Key` header of 16–255 
 
 The project also validates required environment values at startup; placeholder secrets such as `change-me`, `development-only`, or `placeholder` are rejected by [scripts/check-env.js](scripts/check-env.js).
 
+## Repository layout and conventions
+
+The repository follows a strict workspace layout to keep services, shared libraries, and deployment assets isolated:
+
+- `apps/` contains deployable application services. Each app owns its own `src/` folder and app-level config.
+- `libs/` contains shared domain contracts, middleware, logging, and utility libraries. Shared code must live under `libs/<name>/src`.
+- `scripts/` contains repo validation, smoke tests, environment checks, and automation.
+- `k8s/`, `helm/`, and `platform/` contain Kubernetes and Helm deployment assets.
+- `docs/`, `infra/`, `observability/`, and `load/` contain operational and platform documentation/configuration.
+- `workers/` and `work/` contain operational workers and maintenance jobs.
+
+The architecture guard rejects any root-level source files or files placed outside the canonical directories so the monorepo remains predictable and production-safe.
+
 ## Developer workflow
 
 ```sh

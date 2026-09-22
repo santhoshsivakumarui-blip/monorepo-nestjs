@@ -1,0 +1,36 @@
+-- Template for a pooled tenant-owned table, per docs/database-tenancy-strategy.md §5–§6.
+-- Not applied by any migration. Copy this into a new
+-- infra/postgres/migrations/shared_pool/NNNN_<table>.sql when Phase 2 adds the
+-- first real pooled business table, substituting the table/column names.
+--
+-- Every tenant-owned row must carry tenant_id, be covered by an index on it,
+-- and be protected by an RLS policy that reads it from the session's
+-- app.tenant_id setting. Application code must call
+-- libs/common/src/database.ts's withTenantContext() at the start of any
+-- transaction that touches this table, so app.tenant_id is set before the
+-- first query runs.
+
+CREATE TABLE example_tenant_table (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL,
+  branch_id UUID NOT NULL,
+  -- ...domain columns...
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX example_tenant_table_tenant_idx
+  ON example_tenant_table (tenant_id);
+CREATE INDEX example_tenant_table_tenant_branch_idx
+  ON example_tenant_table (tenant_id, branch_id);
+
+ALTER TABLE example_tenant_table ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY example_tenant_table_tenant_isolation
+ON example_tenant_table
+USING (
+  tenant_id = current_setting('app.tenant_id')::uuid
+)
+WITH CHECK (
+  tenant_id = current_setting('app.tenant_id')::uuid
+);

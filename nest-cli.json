@@ -9,6 +9,12 @@
     "api-gateway": { "type": "application", "root": "apps/api-gateway", "entryFile": "main", "sourceRoot": "apps/api-gateway/src", "compilerOptions": { "tsConfigPath": "apps/api-gateway/tsconfig.app.json" } },
     "users": { "type": "application", "root": "apps/users", "entryFile": "main", "sourceRoot": "apps/users/src", "compilerOptions": { "tsConfigPath": "apps/users/tsconfig.app.json" } },
     "orders": { "type": "application", "root": "apps/orders", "entryFile": "main", "sourceRoot": "apps/orders/src", "compilerOptions": { "tsConfigPath": "apps/orders/tsconfig.app.json" } },
-    "notifications": { "type": "application", "root": "apps/notifications", "entryFile": "main", "sourceRoot": "apps/notifications/src", "compilerOptions": { "tsConfigPath": "apps/notifications/tsconfig.app.json" } }
+    "notifications": { "type": "application", "root": "apps/notifications", "entryFile": "main", "sourceRoot": "apps/notifications/src", "compilerOptions": { "tsConfigPath": "apps/notifications/tsconfig.app.json" } },
+    "email": { "type": "application", "root": "apps/email", "entryFile": "main", "sourceRoot": "apps/email/src", "compilerOptions": { "tsConfigPath": "apps/email/tsconfig.app.json" } },
+    "sms": { "type": "application", "root": "apps/sms", "entryFile": "main", "sourceRoot": "apps/sms/src", "compilerOptions": { "tsConfigPath": "apps/sms/tsconfig.app.json" } },
+    "admin": { "type": "application", "root": "apps/admin", "entryFile": "main", "sourceRoot": "apps/admin/src", "compilerOptions": { "tsConfigPath": "apps/admin/tsconfig.app.json" } },
+    "subscriptions": { "type": "application", "root": "apps/subscriptions", "entryFile": "main", "sourceRoot": "apps/subscriptions/src", "compilerOptions": { "tsConfigPath": "apps/subscriptions/tsconfig.app.json" } },
+    "vitals": { "type": "application", "root": "apps/vitals", "entryFile": "main", "sourceRoot": "apps/vitals/src", "compilerOptions": { "tsConfigPath": "apps/vitals/tsconfig.app.json" } },
+    "clinical-records": { "type": "application", "root": "apps/clinical-records", "entryFile": "main", "sourceRoot": "apps/clinical-records/src", "compilerOptions": { "tsConfigPath": "apps/clinical-records/tsconfig.app.json" } }
   }
 }
